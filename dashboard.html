@@ -83,6 +83,15 @@
   summary { cursor: pointer; color: var(--body); font-size: 13px; margin-bottom: 12px; }
 
   .empty-state { color: var(--body); font-size: 13.5px; text-align: center; padding: 32px 0; }
+
+  .hot-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .hot-badge {
+    border: 1px solid var(--m-red);
+    color: var(--body-strong);
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 700;
+  }
 </style>
 </head>
 <body>
@@ -97,6 +106,8 @@
   <nav class="top-nav">
     <a href="index.html">← 아카이브로</a>
     <a href="search.html">뉴스 검색</a>
+    <a href="map.html">해외 뉴스 지도</a>
+    <a href="chat.html">뉴스 Q&A</a>
   </nav>
 
   <div class="filter-row" id="range-filters">
@@ -111,6 +122,7 @@
   <div id="chart-area" hidden>
     <div class="chart-card">
       <h2>카테고리별 기사 건수 추이</h2>
+      <div class="hot-badges" id="hot-badges"></div>
       <div class="chart-wrap"><canvas id="category-chart"></canvas></div>
     </div>
 
@@ -246,6 +258,38 @@
     });
   }
 
+  function detectOutliers(series) {
+    const { dates, datasets } = series;
+    if (dates.length < 2) return [];
+
+    const outliers = [];
+    datasets.forEach(ds => {
+      const priorValues = ds.data.slice(0, -1);
+      const latestValue = ds.data[ds.data.length - 1];
+      const priorSum = priorValues.reduce((a, b) => a + b, 0);
+      const avg = priorValues.length > 0 ? priorSum / priorValues.length : 0;
+
+      if (latestValue < 2) return;
+      if (avg > 0 && latestValue >= avg * 1.5) {
+        outliers.push({ label: ds.label, latestValue, avg });
+      } else if (avg === 0) {
+        outliers.push({ label: ds.label, latestValue, avg });
+      }
+    });
+    return outliers;
+  }
+
+  function renderHotBadges(outliers) {
+    const container = document.getElementById('hot-badges');
+    container.innerHTML = '';
+    outliers.forEach(o => {
+      const badge = document.createElement('span');
+      badge.className = 'hot-badge';
+      badge.textContent = `🔥 오늘 화제: ${o.label} ${o.latestValue}건 (평소 평균 ${o.avg.toFixed(1)}건)`;
+      container.appendChild(badge);
+    });
+  }
+
   function renderTable(rows) {
     const counts = new Map();
     rows.forEach(r => {
@@ -288,6 +332,7 @@
 
     categoryChart = renderChart('category-chart', categoryChart, categorySeries.dates, categorySeries.datasets);
     regionChart = renderChart('region-chart', regionChart, regionSeries.dates, regionSeries.datasets);
+    renderHotBadges(detectOutliers(categorySeries));
     renderTable(rows);
   }
 

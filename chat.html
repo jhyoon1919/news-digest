@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>뉴스 Q&A · 뉴스 다이제스트</title>
+<style>
+  :root {
+    --canvas: #000000;
+    --on-dark: #ffffff;
+    --body: #bbbbbb;
+    --body-strong: #e6e6e6;
+    --muted: #7e7e7e;
+    --hairline: #3c3c3c;
+    --surface-card: #1a1a1a;
+    --m-blue-light: #0066b1;
+    --m-blue-dark: #1c69d4;
+    --m-red: #e22718;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--canvas);
+    color: var(--on-dark);
+    font-family: "BMWTypeNextLatin", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+      "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    font-weight: 300;
+    line-height: 1.6;
+  }
+  .page { max-width: 720px; margin: 0 auto; padding: 40px 24px 64px; }
+  header.title-block { padding-bottom: 24px; margin-bottom: 24px; }
+  .m-stripe {
+    height: 4px;
+    width: 96px;
+    margin-bottom: 16px;
+    background: linear-gradient(90deg, var(--m-blue-light), var(--m-blue-dark), var(--m-red));
+  }
+  h1 { font-size: 28px; font-weight: 700; margin: 0 0 10px; color: var(--on-dark); }
+  .meta { color: var(--body); font-size: 13px; }
+  .top-nav { margin-bottom: 24px; font-size: 12px; }
+  .top-nav a { color: var(--body-strong); text-decoration: underline; margin-right: 16px; }
+
+  .thread { display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px; }
+  .msg { border: 1px solid var(--hairline); padding: 14px 16px; font-size: 14px; }
+  .msg.user { background: var(--surface-card); }
+  .msg.assistant { background: transparent; }
+  .msg .role { font-size: 10.5px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .msg .text { white-space: pre-line; color: var(--body-strong); }
+  .sources { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--hairline); }
+  .sources a { display: block; color: var(--m-blue-light); font-size: 12px; text-decoration: none; margin-bottom: 4px; }
+
+  .input-row { display: flex; gap: 8px; }
+  input[type="text"] {
+    flex: 1;
+    background: var(--surface-card);
+    border: 1px solid var(--hairline);
+    color: var(--on-dark);
+    padding: 10px 12px;
+    font-size: 14px;
+    font-family: inherit;
+  }
+  button {
+    background: var(--on-dark);
+    color: #000;
+    border: none;
+    padding: 10px 18px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  button:disabled { opacity: 0.5; cursor: default; }
+
+  .notice { color: var(--muted); font-size: 12px; margin-top: 14px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="title-block">
+    <div class="m-stripe"></div>
+    <h1>뉴스 Q&A</h1>
+    <div class="meta">저장된 다이제스트 기사를 근거로 질문에 답합니다. (예: "이번 주 경제 뉴스 정리해줘")</div>
+  </header>
+
+  <nav class="top-nav">
+    <a href="index.html">← 아카이브로</a>
+    <a href="search.html">뉴스 검색</a>
+    <a href="dashboard.html">트렌드 대시보드</a>
+    <a href="map.html">해외 뉴스 지도</a>
+  </nav>
+
+  <div class="thread" id="thread"></div>
+
+  <div class="input-row">
+    <input type="text" id="question" placeholder="질문을 입력하세요">
+    <button id="btn-ask">질문</button>
+  </div>
+  <p class="notice">이 페이지는 Vercel에 배포된 상태에서만 동작합니다(서버리스 함수 /api/ask 필요). 로컬 파일로 열면 응답할 수 없습니다.</p>
+
+</div>
+
+<script>
+  const thread = document.getElementById('thread');
+  const input = document.getElementById('question');
+  const btn = document.getElementById('btn-ask');
+
+  function addMessage(role, text) {
+    const msg = document.createElement('div');
+    msg.className = `msg ${role}`;
+    const roleLabel = document.createElement('div');
+    roleLabel.className = 'role';
+    roleLabel.textContent = role === 'user' ? '질문' : '답변';
+    const textEl = document.createElement('div');
+    textEl.className = 'text';
+    textEl.textContent = text;
+    msg.appendChild(roleLabel);
+    msg.appendChild(textEl);
+    thread.appendChild(msg);
+    return msg;
+  }
+
+  function addSources(msgEl, sources) {
+    if (!sources || sources.length === 0) return;
+    const box = document.createElement('div');
+    box.className = 'sources';
+    sources.forEach(s => {
+      const a = document.createElement('a');
+      a.href = s.source_url;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.textContent = `${s.digest_date} · ${s.outlet} · ${s.title}`;
+      box.appendChild(a);
+    });
+    msgEl.appendChild(box);
+  }
+
+  async function ask() {
+    const question = input.value.trim();
+    if (!question) return;
+
+    addMessage('user', question);
+    input.value = '';
+    btn.disabled = true;
+
+    const pending = addMessage('assistant', '답변 생성 중...');
+
+    try {
+      const resp = await fetch('/api/ask', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ question }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) {
+        pending.querySelector('.text').textContent = `오류: ${data.error || '알 수 없는 오류'}`;
+        return;
+      }
+      pending.querySelector('.text').textContent = data.answer;
+      addSources(pending, data.sources);
+    } catch (e) {
+      pending.querySelector('.text').textContent = '요청 중 오류가 발생했습니다. (Vercel에 배포되어 있고 ANTHROPIC_API_KEY가 설정되어 있는지 확인하세요)';
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  btn.addEventListener('click', ask);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') ask(); });
+</script>
+
+</body>
+</html>
