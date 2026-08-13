@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>뉴스 다이제스트 아카이브</title>
+<title>M&A 딜 다이제스트</title>
 <style>
   :root {
     --canvas: #000000;
@@ -12,6 +12,7 @@
     --body-strong: #e6e6e6;
     --muted: #7e7e7e;
     --hairline: #3c3c3c;
+    --surface-card: #1a1a1a;
     --m-blue-light: #0066b1;
     --m-blue-dark: #1c69d4;
     --m-red: #e22718;
@@ -25,8 +26,9 @@
       "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
     font-weight: 300;
     line-height: 1.6;
+    overflow-wrap: break-word;
   }
-  .page { max-width: 720px; margin: 0 auto; padding: 40px 24px 64px; }
+  .page { max-width: 900px; margin: 0 auto; padding: 40px 24px 64px; }
   header.title-block { padding-bottom: 24px; margin-bottom: 24px; }
   .m-stripe {
     height: 4px;
@@ -35,39 +37,200 @@
     background: linear-gradient(90deg, var(--m-blue-light), var(--m-blue-dark), var(--m-red));
   }
   h1 { font-size: 28px; font-weight: 700; margin: 0 0 10px; color: var(--on-dark); }
-  .meta { color: var(--body); font-size: 13px; font-weight: 300; }
-  ul.archive-list { list-style: none; margin: 24px 0 0; padding: 0; }
-  ul.archive-list li { border-bottom: 1px solid var(--hairline); }
-  ul.archive-list a {
-    display: block;
-    padding: 16px 4px;
-    color: var(--body-strong);
-    text-decoration: none;
-    font-size: 15px;
-  }
-  ul.archive-list a:hover { color: var(--on-dark); }
-  .top-nav { margin-top: 20px; font-size: 12px; }
+  .meta { color: var(--body); font-size: 13px; }
+  .top-nav { margin-top: 16px; font-size: 12px; }
   .top-nav a { color: var(--body-strong); text-decoration: underline; margin-right: 16px; }
+
+  .filter-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .chip {
+    background: transparent;
+    border: 1px solid var(--hairline);
+    color: var(--body);
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .chip.active { color: var(--on-dark); border-color: var(--on-dark); }
+
+  .cards { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 20px; }
+  .card { border: 1px solid var(--hairline); padding: 20px; }
+  .tags { margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 10px; }
+  .badge {
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .deal-title { margin: 0 0 8px; font-size: 18px; font-weight: 700; color: var(--on-dark); }
+  .deal-title .arrow { color: var(--m-blue-light); margin: 0 6px; }
+  .deal-value { font-size: 13.5px; color: var(--body-strong); margin-bottom: 10px; font-weight: 700; }
+  .deal-value .note { color: var(--muted); font-weight: 300; margin-left: 6px; }
+  p.summary { margin: 0 0 12px; font-size: 14px; white-space: pre-line; color: var(--body-strong); }
+  .advisors { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+  .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--muted);
+    border-top: 1px solid var(--hairline);
+    padding-top: 10px;
+  }
+  .card-footer a { color: var(--on-dark); text-decoration: none; font-weight: 700; }
+
+  .empty-state { color: var(--body); font-size: 13.5px; text-align: center; padding: 32px 0; }
 </style>
 </head>
 <body>
 <div class="page">
+
   <header class="title-block">
     <div class="m-stripe"></div>
-    <h1>뉴스 다이제스트 아카이브</h1>
-    <div class="meta">전날 주요 국내외 뉴스 다이제스트 목록</div>
+    <h1>M&A 딜 다이제스트</h1>
+    <div class="meta">지난 1개월 국내외 M&A 딜(인수·합병·지분투자·자산매각)</div>
     <nav class="top-nav">
-      <a href="search.html">뉴스 검색</a>
+      <a href="search.html">딜 검색</a>
       <a href="dashboard.html">트렌드 대시보드</a>
-      <a href="map.html">해외 뉴스 지도</a>
+      <a href="map.html">해외 딜 지도</a>
       <a href="chat.html">뉴스 Q&A</a>
       <a href="rss.xml">RSS 피드</a>
     </nav>
   </header>
 
-  <ul class="archive-list">
-    <li><a href="digests/2026-08-11.html">2026-08-11 다이제스트</a></li>
-  </ul>
+  <div class="filter-row" id="region-filters">
+    <button class="chip active" data-region="all">전체 지역</button>
+    <button class="chip" data-region="국내">국내</button>
+    <button class="chip" data-region="해외">해외</button>
+  </div>
+  <div class="filter-row" id="type-filters"></div>
+
+  <div class="cards" id="deal-list"></div>
+  <p class="empty-state" id="empty-state" hidden>표시할 딜이 없습니다.</p>
+
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+  const SUPABASE_URL = 'https://zxihwjolqjdfbyedachb.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp4aWh3am9scWpkZmJ5ZWRhY2hiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0ODI4NjgsImV4cCI6MjEwMjA1ODg2OH0.B9sXpBT0gR03bRhi96zOjXYIlr1tA_Lhk5J8J-7pHIc';
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let allDeals = [];
+  let region = 'all';
+  let dealType = 'all';
+
+  function formatValue(deal) {
+    if (deal.deal_value_krw_100m == null) return '거래금액 비공개';
+    const amount = Number(deal.deal_value_krw_100m).toLocaleString('ko-KR', { maximumFractionDigits: 0 });
+    return `${amount}억원`;
+  }
+
+  function renderTypeFilters(deals) {
+    const types = [...new Set(deals.map(d => d.deal_type).filter(Boolean))];
+    const container = document.getElementById('type-filters');
+    container.innerHTML = '';
+    const allBtn = document.createElement('button');
+    allBtn.className = 'chip active';
+    allBtn.dataset.type = 'all';
+    allBtn.textContent = '전체 딜유형';
+    container.appendChild(allBtn);
+    types.forEach(t => {
+      const btn = document.createElement('button');
+      btn.className = 'chip';
+      btn.dataset.type = t;
+      btn.textContent = t;
+      container.appendChild(btn);
+    });
+  }
+
+  function renderDeals() {
+    const list = document.getElementById('deal-list');
+    const emptyState = document.getElementById('empty-state');
+    list.innerHTML = '';
+
+    const filtered = allDeals.filter(d => {
+      if (region !== 'all' && d.region !== region) return false;
+      if (dealType !== 'all' && d.deal_type !== dealType) return false;
+      return true;
+    });
+
+    emptyState.hidden = filtered.length !== 0;
+
+    filtered.forEach(d => {
+      const card = document.createElement('article');
+      card.className = 'card';
+      const advisorsText = (d.advisors && d.advisors.length) ? `자문사: ${d.advisors.join(', ')}` : '';
+      card.innerHTML = `
+        <div class="tags">
+          <span class="badge">${d.region || ''}</span>
+          <span class="badge">${d.category || ''}</span>
+          <span class="badge">${d.deal_type || ''}</span>
+          ${d.deal_status ? `<span class="badge">${d.deal_status}</span>` : ''}
+        </div>
+        <h3 class="deal-title">${d.acquirer || '?'}<span class="arrow">→</span>${d.target || '?'}</h3>
+        <div class="deal-value">${formatValue(d)}${d.deal_value_note ? `<span class="note">(${d.deal_value_note})</span>` : ''}</div>
+        <p class="summary">${d.summary || ''}</p>
+        ${advisorsText ? `<div class="advisors">${advisorsText}</div>` : ''}
+        <div class="card-footer">
+          <span>${d.outlet || ''} · ${d.published_at || ''}</span>
+          <a href="${d.source_url}" target="_blank" rel="noopener">원문보기 →</a>
+        </div>
+      `;
+      list.appendChild(card);
+    });
+  }
+
+  async function loadDeals() {
+    const from = new Date();
+    from.setDate(from.getDate() - 30);
+    const { data, error } = await sb
+      .from('news_digest_articles')
+      .select('*')
+      .gte('published_at', from.toISOString().slice(0, 10))
+      .order('published_at', { ascending: false });
+
+    if (error) {
+      console.warn('딜 목록 조회 실패', error);
+      return [];
+    }
+    return data || [];
+  }
+
+  function init() {
+    document.getElementById('region-filters').addEventListener('click', e => {
+      const btn = e.target.closest('.chip');
+      if (!btn) return;
+      document.querySelectorAll('#region-filters .chip').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      region = btn.dataset.region;
+      renderDeals();
+    });
+
+    document.getElementById('type-filters').addEventListener('click', e => {
+      const btn = e.target.closest('.chip');
+      if (!btn) return;
+      document.querySelectorAll('#type-filters .chip').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      dealType = btn.dataset.type;
+      renderDeals();
+    });
+
+    loadDeals().then(deals => {
+      allDeals = deals;
+      renderTypeFilters(deals);
+      renderDeals();
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+</script>
+
 </body>
 </html>

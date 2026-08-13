@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>트렌드 대시보드 · 뉴스 다이제스트</title>
+<title>M&A 트렌드 대시보드</title>
 <style>
   :root {
     --canvas: #000000;
@@ -92,6 +92,19 @@
     font-size: 12px;
     font-weight: 700;
   }
+
+  .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1px; background: var(--hairline); margin-bottom: 28px; border: 1px solid var(--hairline); }
+  .stat-tile { background: var(--canvas); padding: 18px 16px; }
+  .stat-tile .label { font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+  .stat-tile .value { font-size: 26px; font-weight: 700; color: var(--on-dark); }
+  .stat-tile .sub { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+  .heatmap-scroll { overflow-x: auto; }
+  table.heatmap { border-collapse: collapse; font-size: 12px; width: 100%; }
+  table.heatmap th, table.heatmap td { padding: 8px 10px; text-align: center; border: 2px solid var(--canvas); white-space: nowrap; }
+  table.heatmap th { color: var(--muted); font-weight: 700; font-size: 10.5px; letter-spacing: 0.5px; }
+  table.heatmap th.row-label, table.heatmap td.row-label { text-align: left; color: var(--body-strong); font-weight: 700; }
+  table.heatmap td.cell { color: #fff; font-weight: 700; }
 </style>
 </head>
 <body>
@@ -99,43 +112,49 @@
 
   <header class="title-block">
     <div class="m-stripe"></div>
-    <h1>트렌드 대시보드</h1>
-    <div class="meta">일자별 카테고리·지역 기사 건수 추이입니다.</div>
+    <h1>M&A 트렌드 대시보드</h1>
+    <div class="meta">기간별 섹터·지역 딜 건수 추이 및 리그테이블 통계입니다.</div>
   </header>
 
   <nav class="top-nav">
-    <a href="index.html">← 아카이브로</a>
-    <a href="search.html">뉴스 검색</a>
-    <a href="map.html">해외 뉴스 지도</a>
+    <a href="index.html">← 딜 다이제스트</a>
+    <a href="search.html">딜 검색</a>
+    <a href="map.html">해외 딜 지도</a>
     <a href="chat.html">뉴스 Q&A</a>
   </nav>
 
   <div class="filter-row" id="range-filters">
-    <button class="preset" data-days="7">최근 7일</button>
-    <button class="preset active" data-days="30">최근 30일</button>
-    <button class="preset" data-days="90">최근 90일</button>
+    <button class="preset" data-days="30">최근 30일</button>
+    <button class="preset active" data-days="90">최근 90일</button>
     <button class="preset" data-days="0">전체</button>
   </div>
 
   <p class="empty-state" id="empty-state" hidden>표시할 데이터가 없습니다.</p>
 
   <div id="chart-area" hidden>
+    <div class="stat-row" id="stat-row"></div>
+
     <div class="chart-card">
-      <h2>카테고리별 기사 건수 추이</h2>
+      <h2>섹터별 딜 건수 추이 (주 단위)</h2>
       <div class="hot-badges" id="hot-badges"></div>
       <div class="chart-wrap"><canvas id="category-chart"></canvas></div>
     </div>
 
     <div class="chart-card">
-      <h2>지역별 기사 건수 추이</h2>
+      <h2>지역별 딜 건수 추이 (주 단위)</h2>
       <div class="chart-wrap"><canvas id="region-chart"></canvas></div>
     </div>
 
+    <div class="chart-card">
+      <h2>섹터 히트맵 (주 단위 딜 건수)</h2>
+      <div class="heatmap-scroll"><table class="heatmap" id="heatmap"></table></div>
+    </div>
+
     <details>
-      <summary>표로 보기 (일자·지역·카테고리·건수)</summary>
+      <summary>표로 보기 (발표일·지역·섹터·딜유형·건수)</summary>
       <table class="data-table" id="data-table">
         <thead>
-          <tr><th>날짜</th><th>지역</th><th>카테고리</th><th>건수</th></tr>
+          <tr><th>발표일</th><th>지역</th><th>섹터</th><th>딜유형</th><th>건수</th></tr>
         </thead>
         <tbody id="data-table-body"></tbody>
       </table>
@@ -151,17 +170,15 @@
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp4aWh3am9scWpkZmJ5ZWRhY2hiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0ODI4NjgsImV4cCI6MjEwMjA1ODg2OH0.B9sXpBT0gR03bRhi96zOjXYIlr1tA_Lhk5J8J-7pHIc';
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // Validated dark-mode categorical slots (node scripts/validate_palette.js, surface #000000): all PASS
-  const CATEGORY_COLORS = {
-    '정치': '#3987e5', // slot 1 blue
-    '경제': '#d95926', // slot 2 orange
-    '사회': '#199e70', // slot 3 aqua
-    '국제': '#c98500', // slot 4 yellow
-  };
+  // Validated dark-mode categorical slots (node scripts/validate_palette.js, surface #000000): all PASS (8-slot adjacent order)
+  const CATEGORY_PALETTE = ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300', '#9085e9', '#e66767'];
+  const OTHER_COLOR = '#5a5a5a';
   const REGION_COLORS = {
     '국내': '#3987e5', // slot 1 blue
     '해외': '#e66767', // slot 8 red (dark)
   };
+  // Sequential blue ramp (dark surface): darkest = near-zero (recedes to black canvas), brightest = highest count
+  const HEAT_STEPS = ['#104281', '#184f95', '#256abf', '#3987e5', '#6da7ec', '#9ec5f4', '#cde2fb'];
   const AXIS_INK = '#7e7e7e';
   const GRID_INK = '#2c2c2a';
   const LEGEND_INK = '#e6e6e6';
@@ -174,13 +191,13 @@
   }
 
   async function loadRows(days) {
-    let query = sb.from('news_digest_articles').select('digest_date, region, category');
+    let query = sb.from('news_digest_articles').select('published_at, region, category, deal_type, deal_value_krw_100m');
     if (days > 0) {
       const from = new Date();
       from.setDate(from.getDate() - days);
-      query = query.gte('digest_date', toISODate(from));
+      query = query.gte('published_at', toISODate(from));
     }
-    const { data, error } = await query.order('digest_date', { ascending: true });
+    const { data, error } = await query.order('published_at', { ascending: true });
     if (error) {
       console.warn('대시보드 데이터 조회 실패', error);
       return [];
@@ -188,29 +205,172 @@
     return data || [];
   }
 
-  function buildSeries(rows, dimension, colorMap) {
-    const dates = [...new Set(rows.map(r => r.digest_date))].sort();
-    const keys = Object.keys(colorMap);
+  function buildWeekBuckets(rows) {
+    if (rows.length === 0) return { labels: [], bucketOf: () => -1 };
+    const sortedDates = rows.map(r => r.published_at).sort();
+    const startMs = new Date(sortedDates[0] + 'T00:00:00Z').getTime();
+    const WEEK_MS = 7 * 24 * 3600 * 1000;
+    const bucketOf = dateStr => Math.floor((new Date(dateStr + 'T00:00:00Z').getTime() - startMs) / WEEK_MS);
+    const maxBucket = Math.max(...rows.map(r => bucketOf(r.published_at)));
+    const fmt = ms => {
+      const d = new Date(ms);
+      return `${String(d.getUTCMonth() + 1).padStart(2, '0')}/${String(d.getUTCDate()).padStart(2, '0')}`;
+    };
+    const labels = [];
+    for (let i = 0; i <= maxBucket; i++) {
+      const bStart = startMs + i * WEEK_MS;
+      const bEnd = bStart + 6 * 24 * 3600 * 1000;
+      labels.push(`${fmt(bStart)}~${fmt(bEnd)}`);
+    }
+    return { labels, bucketOf };
+  }
+
+  function buildSeries(rows, dimension, weekInfo, fixedColorMap) {
+    const { labels, bucketOf } = weekInfo;
+    let keys, colorFor;
+
+    if (fixedColorMap) {
+      keys = Object.keys(fixedColorMap);
+      colorFor = k => fixedColorMap[k];
+    } else {
+      const totals = {};
+      rows.forEach(r => {
+        const v = r[dimension] || '기타';
+        totals[v] = (totals[v] || 0) + 1;
+      });
+      const ordered = Object.keys(totals).sort((a, b) => totals[b] - totals[a]);
+      const capped = ordered.slice(0, 8);
+      const hasOverflow = ordered.length > 8;
+      keys = hasOverflow ? capped.concat(['기타']) : capped;
+      colorFor = k => {
+        const idx = capped.indexOf(k);
+        return idx >= 0 ? CATEGORY_PALETTE[idx] : OTHER_COLOR;
+      };
+    }
+
     const counts = {};
     keys.forEach(k => { counts[k] = {}; });
 
     rows.forEach(r => {
-      const key = r[dimension];
-      if (!counts[key]) return;
-      counts[key][r.digest_date] = (counts[key][r.digest_date] || 0) + 1;
+      let key = r[dimension] || '기타';
+      if (!keys.includes(key)) key = keys.includes('기타') ? '기타' : null;
+      if (!key) return;
+      const b = bucketOf(r.published_at);
+      if (b < 0) return;
+      const label = labels[b];
+      counts[key][label] = (counts[key][label] || 0) + 1;
     });
 
     const datasets = keys.map(k => ({
       label: k,
-      data: dates.map(d => counts[k][d] || 0),
-      backgroundColor: colorMap[k],
+      data: labels.map(l => counts[k][l] || 0),
+      backgroundColor: colorFor(k),
       borderWidth: 0,
       borderRadius: 4,
       borderSkipped: false,
       maxBarThickness: 24,
     }));
 
-    return { dates, datasets };
+    return { dates: labels, datasets };
+  }
+
+  function heatColor(ratio) {
+    const idx = Math.min(HEAT_STEPS.length - 1, Math.floor(ratio * HEAT_STEPS.length));
+    return HEAT_STEPS[idx];
+  }
+
+  function renderStatTiles(rows) {
+    const domestic = rows.filter(r => r.region === '국내').length;
+    const overseas = rows.filter(r => r.region === '해외').length;
+    const valued = rows.filter(r => r.deal_value_krw_100m != null);
+    const totalValue = valued.reduce((s, r) => s + Number(r.deal_value_krw_100m), 0);
+
+    const tiles = [
+      { label: '국내 딜', value: `${domestic}건` },
+      { label: '해외 딜', value: `${overseas}건` },
+      {
+        label: '총 거래금액(공개분)',
+        value: `${totalValue.toLocaleString('ko-KR', { maximumFractionDigits: 0 })}억원`,
+        sub: `공개된 ${valued.length}건 기준 · 산출: deal_value_krw_100m 합계, 미공개 ${rows.length - valued.length}건 제외`,
+      },
+    ];
+
+    const row = document.getElementById('stat-row');
+    row.innerHTML = '';
+    tiles.forEach(t => {
+      const tile = document.createElement('div');
+      tile.className = 'stat-tile';
+      tile.innerHTML = `
+        <div class="label">${t.label}</div>
+        <div class="value">${t.value}</div>
+        ${t.sub ? `<div class="sub">${t.sub}</div>` : ''}
+      `;
+      row.appendChild(tile);
+    });
+  }
+
+  function renderHeatmap(rows, weekInfo) {
+    const { labels, bucketOf } = weekInfo;
+    const table = document.getElementById('heatmap');
+    table.innerHTML = '';
+    if (labels.length === 0) return;
+
+    const totals = {};
+    rows.forEach(r => { if (r.category) totals[r.category] = (totals[r.category] || 0) + 1; });
+    const topSectors = Object.keys(totals).sort((a, b) => totals[b] - totals[a]).slice(0, 10);
+    if (topSectors.length === 0) return;
+
+    const matrix = {};
+    topSectors.forEach(s => { matrix[s] = {}; labels.forEach(l => { matrix[s][l] = 0; }); });
+    rows.forEach(r => {
+      if (!r.category || !topSectors.includes(r.category)) return;
+      const b = bucketOf(r.published_at);
+      if (b < 0) return;
+      const label = labels[b];
+      matrix[r.category][label] += 1;
+    });
+
+    let maxCount = 0;
+    topSectors.forEach(s => labels.forEach(l => { maxCount = Math.max(maxCount, matrix[s][l]); }));
+
+    const thead = document.createElement('thead');
+    const headRow = document.createElement('tr');
+    const corner = document.createElement('th');
+    corner.className = 'row-label';
+    corner.textContent = '섹터';
+    headRow.appendChild(corner);
+    labels.forEach(l => {
+      const th = document.createElement('th');
+      th.textContent = l;
+      headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    topSectors.forEach(s => {
+      const tr = document.createElement('tr');
+      const rowTh = document.createElement('td');
+      rowTh.className = 'row-label';
+      rowTh.textContent = s;
+      tr.appendChild(rowTh);
+      labels.forEach(l => {
+        const count = matrix[s][l];
+        const td = document.createElement('td');
+        td.className = 'cell';
+        if (count === 0) {
+          td.style.background = '#141414';
+          td.style.color = '#4a4a4a';
+        } else {
+          const ratio = maxCount > 0 ? count / maxCount : 0;
+          td.style.background = heatColor(ratio);
+          td.textContent = String(count);
+        }
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
   }
 
   function renderChart(canvasId, existingChart, dates, datasets, title) {
@@ -285,7 +445,7 @@
     outliers.forEach(o => {
       const badge = document.createElement('span');
       badge.className = 'hot-badge';
-      badge.textContent = `🔥 오늘 화제: ${o.label} ${o.latestValue}건 (평소 평균 ${o.avg.toFixed(1)}건)`;
+      badge.textContent = `🔥 급증 섹터: ${o.label} 최근주 ${o.latestValue}건 (이전 주 평균 ${o.avg.toFixed(1)}건)`;
       container.appendChild(badge);
     });
   }
@@ -293,7 +453,7 @@
   function renderTable(rows) {
     const counts = new Map();
     rows.forEach(r => {
-      const key = `${r.digest_date}|${r.region}|${r.category}`;
+      const key = `${r.published_at}|${r.region}|${r.category || ''}|${r.deal_type || ''}`;
       counts.set(key, (counts.get(key) || 0) + 1);
     });
 
@@ -303,9 +463,9 @@
     [...counts.entries()]
       .sort((a, b) => (a[0] < b[0] ? 1 : -1))
       .forEach(([key, count]) => {
-        const [date, region, category] = key.split('|');
+        const [date, region, category, dealType] = key.split('|');
         const tr = document.createElement('tr');
-        [date, region, category, String(count)].forEach(text => {
+        [date, region, category, dealType, String(count)].forEach(text => {
           const td = document.createElement('td');
           td.textContent = text;
           tr.appendChild(td);
@@ -327,12 +487,15 @@
     emptyState.hidden = true;
     chartArea.hidden = false;
 
-    const categorySeries = buildSeries(rows, 'category', CATEGORY_COLORS);
-    const regionSeries = buildSeries(rows, 'region', REGION_COLORS);
+    const weekInfo = buildWeekBuckets(rows);
+    const categorySeries = buildSeries(rows, 'category', weekInfo, null);
+    const regionSeries = buildSeries(rows, 'region', weekInfo, REGION_COLORS);
 
     categoryChart = renderChart('category-chart', categoryChart, categorySeries.dates, categorySeries.datasets);
     regionChart = renderChart('region-chart', regionChart, regionSeries.dates, regionSeries.datasets);
     renderHotBadges(detectOutliers(categorySeries));
+    renderStatTiles(rows);
+    renderHeatmap(rows, weekInfo);
     renderTable(rows);
   }
 
@@ -345,7 +508,7 @@
       renderAll(Number(btn.dataset.days));
     });
 
-    renderAll(30);
+    renderAll(90);
   }
 
   document.addEventListener('DOMContentLoaded', init);

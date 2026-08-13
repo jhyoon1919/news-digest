@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>뉴스 검색 · 뉴스 다이제스트</title>
+<title>딜 검색 · M&A 딜 다이제스트</title>
 <style>
   :root {
     --canvas: #000000;
@@ -43,17 +43,9 @@
   .top-nav { margin-bottom: 24px; font-size: 12px; }
   .top-nav a { color: var(--body-strong); text-decoration: underline; margin-right: 16px; }
 
-  .panel {
-    border: 1px solid var(--hairline);
-    padding: 20px;
-    margin-bottom: 24px;
-  }
+  .panel { border: 1px solid var(--hairline); padding: 20px; margin-bottom: 24px; }
 
-  .search-row {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 14px;
-  }
+  .search-row { display: flex; gap: 8px; margin-bottom: 14px; }
   input[type="text"], input[type="date"] {
     background: var(--surface-card);
     border: 1px solid var(--hairline);
@@ -75,18 +67,9 @@
     cursor: pointer;
     font-family: inherit;
   }
-  button.ghost {
-    background: transparent;
-    color: var(--body);
-    border: 1px solid var(--hairline);
-  }
+  button.ghost { background: transparent; color: var(--body); border: 1px solid var(--hairline); }
 
-  .filter-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 14px;
-  }
+  .filter-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
   .chip {
     background: transparent;
     border: 1px solid var(--hairline);
@@ -95,7 +78,6 @@
     font-size: 12px;
     font-weight: 700;
     letter-spacing: 1px;
-    text-transform: uppercase;
     cursor: pointer;
   }
   .chip.active { color: var(--on-dark); border-color: var(--on-dark); }
@@ -112,38 +94,21 @@
     font-size: 12.5px;
     color: var(--body-strong);
   }
-  .keyword-chip button {
-    background: transparent;
-    color: var(--muted);
-    border: none;
-    padding: 2px 8px;
-    font-size: 11px;
-  }
+  .keyword-chip button { background: transparent; color: var(--muted); border: none; padding: 2px 8px; font-size: 11px; }
 
-  .cards { display: grid; grid-template-columns: 1fr; gap: 20px; }
+  .cards { display: grid; grid-template-columns: 1fr; gap: 16px; }
   .card { border: 1px solid var(--hairline); padding: 20px; }
-  .tags { margin-bottom: 10px; }
-  .badge {
-    display: inline-block;
-    font-size: 10.5px;
-    font-weight: 700;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-right: 12px;
-  }
-  .card h3 { margin: 0 0 10px; font-size: 17px; font-weight: 700; color: var(--on-dark); }
-  .card p.summary { margin: 0 0 14px; font-size: 14px; white-space: pre-line; color: var(--body-strong); }
+  .tags { margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 10px; }
+  .badge { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+  .deal-title { margin: 0 0 8px; font-size: 17px; font-weight: 700; color: var(--on-dark); }
+  .deal-title .arrow { color: var(--m-blue-light); margin: 0 6px; }
+  .deal-value { font-size: 13px; color: var(--body-strong); margin-bottom: 10px; font-weight: 700; }
+  .deal-value .note { color: var(--muted); font-weight: 300; margin-left: 6px; }
+  p.summary { margin: 0 0 14px; font-size: 14px; white-space: pre-line; color: var(--body-strong); }
+  .advisors { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
   .card-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
-    font-size: 12px;
-    color: var(--muted);
-    border-top: 1px solid var(--hairline);
-    padding-top: 10px;
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
+    font-size: 12px; color: var(--muted); border-top: 1px solid var(--hairline); padding-top: 10px;
   }
   .card-footer a { color: var(--on-dark); text-decoration: none; font-weight: 700; }
   mark { background: var(--mark-bg); color: var(--on-dark); padding: 0 2px; }
@@ -156,20 +121,20 @@
 
   <header class="title-block">
     <div class="m-stripe"></div>
-    <h1>뉴스 검색</h1>
-    <div class="meta">저장된 다이제스트 기사를 키워드·지역·카테고리·기간으로 검색합니다.</div>
+    <h1>딜 검색</h1>
+    <div class="meta">저장된 M&A 딜을 회사명·섹터·지역·딜유형·기간으로 검색합니다.</div>
   </header>
 
   <nav class="top-nav">
-    <a href="index.html">← 아카이브로</a>
+    <a href="index.html">← 딜 다이제스트</a>
     <a href="dashboard.html">트렌드 대시보드</a>
-    <a href="map.html">해외 뉴스 지도</a>
+    <a href="map.html">해외 딜 지도</a>
     <a href="chat.html">뉴스 Q&A</a>
   </nav>
 
   <section class="panel">
     <div class="search-row">
-      <input type="text" id="q" placeholder="제목·요약 키워드 검색 (예: 코스피, 지진)">
+      <input type="text" id="q" placeholder="회사명·키워드 검색 (예: 삼성, 반도체)">
       <button id="btn-search">검색</button>
     </div>
 
@@ -178,15 +143,10 @@
       <button class="chip" data-region="국내">국내</button>
       <button class="chip" data-region="해외">해외</button>
     </div>
-    <div class="filter-row" id="category-filters">
-      <button class="chip active" data-category="all">전체 카테고리</button>
-      <button class="chip" data-category="정치">정치</button>
-      <button class="chip" data-category="경제">경제</button>
-      <button class="chip" data-category="사회">사회</button>
-      <button class="chip" data-category="국제">국제</button>
-    </div>
+    <div class="filter-row" id="sector-filters"><button class="chip active" data-sector="all">전체 섹터</button></div>
+    <div class="filter-row" id="type-filters"><button class="chip active" data-type="all">전체 딜유형</button></div>
     <div class="date-row">
-      <span>기간</span>
+      <span>발표일</span>
       <input type="date" id="date-from">
       <span>~</span>
       <input type="date" id="date-to">
@@ -195,9 +155,9 @@
   </section>
 
   <section class="panel">
-    <h2>관심 키워드</h2>
+    <h2>관심 기업</h2>
     <div class="search-row">
-      <input type="text" id="keyword-input" placeholder="관심 키워드 추가 (예: 삼성전자)">
+      <input type="text" id="keyword-input" placeholder="관심 기업 추가 (예: 삼성전자)">
       <button id="btn-add-keyword">추가</button>
     </div>
     <div class="keyword-list" id="keyword-list"></div>
@@ -217,29 +177,27 @@
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   let region = 'all';
-  let category = 'all';
+  let sector = 'all';
+  let dealType = 'all';
 
   function escapeHtml(str) {
-    return str.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    return String(str || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
-
-  function escapeRegExp(str) {
-    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  }
-
+  function escapeRegExp(str) { return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
   function highlight(text, keyword) {
     const escaped = escapeHtml(text);
     if (!keyword) return escaped;
     const re = new RegExp(escapeRegExp(escapeHtml(keyword)), 'gi');
     return escaped.replace(re, m => `<mark>${m}</mark>`);
   }
+  function formatValue(deal) {
+    if (deal.deal_value_krw_100m == null) return '거래금액 비공개';
+    return `${Number(deal.deal_value_krw_100m).toLocaleString('ko-KR', { maximumFractionDigits: 0 })}억원`;
+  }
 
   async function loadKeywords() {
     const { data, error } = await sb.from('watched_keywords').select('*').order('created_at', { ascending: true });
-    if (error) {
-      console.warn('키워드 조회 실패', error);
-      return [];
-    }
+    if (error) { console.warn('관심 기업 조회 실패', error); return []; }
     return data;
   }
 
@@ -253,19 +211,33 @@
       chip.innerHTML = `<span>${escapeHtml(k.keyword)}</span>`;
       const useBtn = document.createElement('button');
       useBtn.textContent = '검색';
-      useBtn.addEventListener('click', () => {
-        document.getElementById('q').value = k.keyword;
-        runSearch();
-      });
+      useBtn.addEventListener('click', () => { document.getElementById('q').value = k.keyword; runSearch(); });
       const delBtn = document.createElement('button');
       delBtn.textContent = '삭제';
-      delBtn.addEventListener('click', async () => {
-        await sb.from('watched_keywords').delete().eq('id', k.id);
-        renderKeywords();
-      });
+      delBtn.addEventListener('click', async () => { await sb.from('watched_keywords').delete().eq('id', k.id); renderKeywords(); });
       chip.appendChild(useBtn);
       chip.appendChild(delBtn);
       list.appendChild(chip);
+    });
+  }
+
+  function buildDynamicFilters(rows) {
+    const sectorContainer = document.getElementById('sector-filters');
+    const typeContainer = document.getElementById('type-filters');
+    const sectors = [...new Set(rows.map(r => r.category).filter(Boolean))];
+    const types = [...new Set(rows.map(r => r.deal_type).filter(Boolean))];
+
+    sectorContainer.innerHTML = '<button class="chip active" data-sector="all">전체 섹터</button>';
+    sectors.forEach(s => {
+      const btn = document.createElement('button');
+      btn.className = 'chip'; btn.dataset.sector = s; btn.textContent = s;
+      sectorContainer.appendChild(btn);
+    });
+    typeContainer.innerHTML = '<button class="chip active" data-type="all">전체 딜유형</button>';
+    types.forEach(t => {
+      const btn = document.createElement('button');
+      btn.className = 'chip'; btn.dataset.type = t; btn.textContent = t;
+      typeContainer.appendChild(btn);
     });
   }
 
@@ -273,23 +245,25 @@
     const results = document.getElementById('results');
     const emptyState = document.getElementById('empty-state');
     results.innerHTML = '';
-
     emptyState.hidden = items.length !== 0;
 
-    items.forEach(item => {
+    items.forEach(d => {
+      const advisorsText = (d.advisors && d.advisors.length) ? `자문사: ${d.advisors.join(', ')}` : '';
       const card = document.createElement('article');
       card.className = 'card';
       card.innerHTML = `
         <div class="tags">
-          <span class="badge">${item.region}</span>
-          <span class="badge">${item.category}</span>
-          <span class="badge">${item.digest_date}</span>
+          <span class="badge">${escapeHtml(d.region)}</span>
+          <span class="badge">${escapeHtml(d.category)}</span>
+          <span class="badge">${escapeHtml(d.deal_type)}</span>
         </div>
-        <h3>${highlight(item.title, keyword)}</h3>
-        <p class="summary">${highlight(item.summary, keyword)}</p>
+        <h3 class="deal-title">${highlight(d.acquirer, keyword)}<span class="arrow">→</span>${highlight(d.target, keyword)}</h3>
+        <div class="deal-value">${formatValue(d)}${d.deal_value_note ? `<span class="note">(${escapeHtml(d.deal_value_note)})</span>` : ''}</div>
+        <p class="summary">${highlight(d.summary, keyword)}</p>
+        ${advisorsText ? `<div class="advisors">${escapeHtml(advisorsText)}</div>` : ''}
         <div class="card-footer">
-          <span>${escapeHtml(item.outlet)} · ${item.published_at}</span>
-          <a href="${item.source_url}" target="_blank" rel="noopener">원문보기 →</a>
+          <span>${escapeHtml(d.outlet)} · ${d.published_at}</span>
+          <a href="${d.source_url}" target="_blank" rel="noopener">원문보기 →</a>
         </div>
       `;
       results.appendChild(card);
@@ -305,22 +279,20 @@
 
     if (keyword) {
       const like = `%${keyword}%`;
-      query = query.or(`title.ilike.${like},summary.ilike.${like}`);
+      query = query.or(`title.ilike.${like},summary.ilike.${like},acquirer.ilike.${like},target.ilike.${like}`);
     }
     if (region !== 'all') query = query.eq('region', region);
-    if (category !== 'all') query = query.eq('category', category);
-    if (dateFrom) query = query.gte('digest_date', dateFrom);
-    if (dateTo) query = query.lte('digest_date', dateTo);
+    if (sector !== 'all') query = query.eq('category', sector);
+    if (dealType !== 'all') query = query.eq('deal_type', dealType);
+    if (dateFrom) query = query.gte('published_at', dateFrom);
+    if (dateTo) query = query.lte('published_at', dateTo);
 
-    query = query.order('digest_date', { ascending: false }).order('id', { ascending: false }).limit(100);
+    query = query.order('published_at', { ascending: false }).limit(200);
 
     const { data, error } = await query;
-    if (error) {
-      console.warn('검색 실패', error);
-      renderResults([], keyword);
-      return;
-    }
+    if (error) { console.warn('검색 실패', error); renderResults([], keyword); return; }
     renderResults(data || [], keyword);
+    if (!window.__filtersBuilt) { buildDynamicFilters(data || []); window.__filtersBuilt = true; }
   }
 
   function init() {
@@ -330,33 +302,31 @@
     document.getElementById('date-to').addEventListener('change', runSearch);
 
     document.getElementById('region-filters').addEventListener('click', e => {
-      const btn = e.target.closest('.chip');
-      if (!btn) return;
+      const btn = e.target.closest('.chip'); if (!btn) return;
       document.querySelectorAll('#region-filters .chip').forEach(c => c.classList.remove('active'));
-      btn.classList.add('active');
-      region = btn.dataset.region;
-      runSearch();
+      btn.classList.add('active'); region = btn.dataset.region; runSearch();
     });
-
-    document.getElementById('category-filters').addEventListener('click', e => {
-      const btn = e.target.closest('.chip');
-      if (!btn) return;
-      document.querySelectorAll('#category-filters .chip').forEach(c => c.classList.remove('active'));
-      btn.classList.add('active');
-      category = btn.dataset.category;
-      runSearch();
+    document.getElementById('sector-filters').addEventListener('click', e => {
+      const btn = e.target.closest('.chip'); if (!btn) return;
+      document.querySelectorAll('#sector-filters .chip').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active'); sector = btn.dataset.sector; runSearch();
     });
-
+    document.getElementById('type-filters').addEventListener('click', e => {
+      const btn = e.target.closest('.chip'); if (!btn) return;
+      document.querySelectorAll('#type-filters .chip').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active'); dealType = btn.dataset.type; runSearch();
+    });
     document.getElementById('btn-reset').addEventListener('click', () => {
       document.getElementById('q').value = '';
       document.getElementById('date-from').value = '';
       document.getElementById('date-to').value = '';
-      region = 'all';
-      category = 'all';
+      region = 'all'; sector = 'all'; dealType = 'all';
       document.querySelectorAll('#region-filters .chip').forEach(c => c.classList.remove('active'));
       document.querySelector('#region-filters .chip[data-region="all"]').classList.add('active');
-      document.querySelectorAll('#category-filters .chip').forEach(c => c.classList.remove('active'));
-      document.querySelector('#category-filters .chip[data-category="all"]').classList.add('active');
+      document.querySelectorAll('#sector-filters .chip').forEach(c => c.classList.remove('active'));
+      document.querySelector('#sector-filters .chip[data-sector="all"]').classList.add('active');
+      document.querySelectorAll('#type-filters .chip').forEach(c => c.classList.remove('active'));
+      document.querySelector('#type-filters .chip[data-type="all"]').classList.add('active');
       runSearch();
     });
 
@@ -365,10 +335,7 @@
       const keyword = input.value.trim();
       if (!keyword) return;
       const { error } = await sb.from('watched_keywords').upsert({ keyword }, { onConflict: 'keyword', ignoreDuplicates: true });
-      if (error) {
-        alert('키워드 추가 실패: ' + error.message);
-        return;
-      }
+      if (error) { alert('관심 기업 추가 실패: ' + error.message); return; }
       input.value = '';
       renderKeywords();
     });

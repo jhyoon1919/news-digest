@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>해외 뉴스 지도 · 뉴스 다이제스트</title>
+<title>해외 딜 지도 · M&A 딜 다이제스트</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
   :root {
@@ -61,19 +61,19 @@
 
   <header class="title-block">
     <div class="m-stripe"></div>
-    <h1>해외 뉴스 지도</h1>
-    <div class="meta">해외 다이제스트 기사가 보도된 위치를 지도에 표시합니다.</div>
+    <h1>해외 딜 지도</h1>
+    <div class="meta">해외 당사자가 있는 M&A 딜의 소재지를 지도에 표시합니다.</div>
   </header>
 
   <nav class="top-nav">
-    <a href="index.html">← 아카이브로</a>
-    <a href="search.html">뉴스 검색</a>
+    <a href="index.html">← 딜 다이제스트</a>
+    <a href="search.html">딜 검색</a>
     <a href="dashboard.html">트렌드 대시보드</a>
     <a href="chat.html">뉴스 Q&A</a>
   </nav>
 
   <div id="map"></div>
-  <p class="empty-state" id="empty-state" hidden>위치 정보가 있는 해외 기사가 없습니다.</p>
+  <p class="empty-state" id="empty-state" hidden>위치 정보가 있는 해외 딜이 없습니다.</p>
 
 </div>
 
@@ -84,14 +84,14 @@
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp4aWh3am9scWpkZmJ5ZWRhY2hiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0ODI4NjgsImV4cCI6MjEwMjA1ODg2OH0.B9sXpBT0gR03bRhi96zOjXYIlr1tA_Lhk5J8J-7pHIc';
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  async function loadLocatedArticles() {
+  async function loadLocatedDeals() {
     const { data, error } = await sb
       .from('news_digest_articles')
       .select('*')
       .eq('region', '해외')
       .not('lat', 'is', null)
       .not('lng', 'is', null)
-      .order('digest_date', { ascending: false })
+      .order('published_at', { ascending: false })
       .limit(200);
 
     if (error) {
@@ -99,6 +99,11 @@
       return [];
     }
     return data || [];
+  }
+
+  function formatValue(deal) {
+    if (deal.deal_value_krw_100m == null) return '거래금액 비공개';
+    return `${Number(deal.deal_value_krw_100m).toLocaleString('ko-KR', { maximumFractionDigits: 0 })}억원`;
   }
 
   function init() {
@@ -109,15 +114,15 @@
       maxZoom: 18,
     }).addTo(map);
 
-    loadLocatedArticles().then(articles => {
-      if (articles.length === 0) {
+    loadLocatedDeals().then(deals => {
+      if (deals.length === 0) {
         document.getElementById('empty-state').hidden = false;
         return;
       }
 
       const bounds = [];
-      articles.forEach(a => {
-        const marker = L.circleMarker([a.lat, a.lng], {
+      deals.forEach(d => {
+        const marker = L.circleMarker([d.lat, d.lng], {
           radius: 8,
           color: '#e66767',
           weight: 2,
@@ -128,23 +133,27 @@
         const popup = document.createElement('div');
         const title = document.createElement('div');
         title.className = 'popup-title';
-        title.textContent = a.title;
+        title.textContent = `${d.acquirer || '?'} → ${d.target || '?'}`;
+        const value = document.createElement('div');
+        value.className = 'popup-meta';
+        value.textContent = formatValue(d);
         const meta = document.createElement('div');
         meta.className = 'popup-meta';
-        meta.textContent = `${a.country || ''} · ${a.outlet} · ${a.published_at}`;
+        meta.textContent = `${d.country || ''} · ${d.outlet} · ${d.published_at}`;
         const link = document.createElement('a');
         link.className = 'popup-link';
-        link.href = a.source_url;
+        link.href = d.source_url;
         link.target = '_blank';
         link.rel = 'noopener';
         link.textContent = '원문보기 →';
 
         popup.appendChild(title);
+        popup.appendChild(value);
         popup.appendChild(meta);
         popup.appendChild(link);
 
         marker.bindPopup(popup);
-        bounds.push([a.lat, a.lng]);
+        bounds.push([d.lat, d.lng]);
       });
 
       if (bounds.length > 0) {
